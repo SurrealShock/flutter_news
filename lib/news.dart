@@ -232,7 +232,7 @@ class MyHomeState extends State<MyHome> {
                                         items: <List<Object>>[
                                           [
                                             '  Save',
-                                            Icons.bookmark,
+                                            Icons.bookmark_border,
                                           ],
                                           [
                                             '  Customize',
@@ -435,7 +435,7 @@ class BookMarkState extends State<BookMarks> {
                                               iconSize: 20.0,
                                               items: <List<Object>>[
                                                 [
-                                                  '  Save',
+                                                  '  Remove bookmark',
                                                   Icons.bookmark,
                                                 ],
                                                 [
