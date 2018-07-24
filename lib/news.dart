@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'customdropdown.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
 
 bool loaded = false;
 var loadedJson;
@@ -70,14 +71,17 @@ class BookMarkItem {
   String description;
   String imageURL;
   String source;
+  String articleURL;
 
-  BookMarkItem(this.title, this.description, this.imageURL, this.source);
+  BookMarkItem(this.title, this.description, this.imageURL, this.source,
+      this.articleURL);
   BookMarkItem.fromSnapshot(DataSnapshot snapshot)
       : key = snapshot.key,
         title = snapshot.value['title'],
         description = snapshot.value['description'],
         imageURL = snapshot.value['imageURL'],
-        source = snapshot.value['source'];
+        source = snapshot.value['source'],
+        articleURL = snapshot.value['articleURL'];
 
   toJson() {
     return {
@@ -85,6 +89,7 @@ class BookMarkItem {
       'description': description,
       'imageURL': imageURL,
       'source': source,
+      'articleURL': articleURL,
     };
   }
 }
@@ -100,11 +105,13 @@ class MyHomeState extends State<MyHome> {
   @override
   void initState() {
     super.initState();
-    bookMarkItem = BookMarkItem("", "", "", "");
+    bookMarkItem = BookMarkItem("", "", "", "", "");
     final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
-    reference = firebaseDatabase.reference().child('bookmarks');
-    reference.onChildAdded.listen(_onEntryAdded);
-    reference.onChildChanged.listen(_onEntryChanged);
+    _getUser().then((user) {
+      reference = firebaseDatabase.reference().child('users/' + user.uid);
+      reference.onChildAdded.listen(_onEntryAdded);
+      reference.onChildChanged.listen(_onEntryChanged);
+    });
   }
 
   _onEntryAdded(Event event) {
@@ -122,7 +129,7 @@ class MyHomeState extends State<MyHome> {
     });
   }
 
-  void bookMark() {
+  void bookMark() async {
     reference.push().set(bookMarkItem.toJson());
   }
 
@@ -266,6 +273,9 @@ class MyHomeState extends State<MyHome> {
                                               bookMarkItem.source =
                                                   jsonResponse['articles']
                                                       [index]['source']['name'];
+                                              bookMarkItem.articleURL =
+                                                  jsonResponse['articles']
+                                                      [index]['url'];
                                               bookMark();
                                               break;
                                             case '  Customize':
@@ -339,17 +349,8 @@ class MyHomeState extends State<MyHome> {
     );
   }
 
-  _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
-
   Future<String> fetchFutureLaunches() async {
     if (!loaded) {
-      print(loaded);
       print("Got from URL.");
       final json = await http.get(
           "https://newsapi.org/v2/top-headlines?country=us&apiKey=792059e30e20494e94fd5a2e56fb4da4");
@@ -367,14 +368,191 @@ class MyHome extends StatefulWidget {
   MyHomeState createState() => MyHomeState();
 }
 
-class BookMarks extends StatelessWidget {
+class BookMarks extends StatefulWidget {
+  @override
+  BookMarkState createState() => BookMarkState();
+}
+
+class BookMarkState extends State<BookMarks> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Bookmarks"),
       ),
-      body: Center(),
+      body: Center(
+        child: FutureBuilder(
+          future: _getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              FirebaseUser user = snapshot.data;
+              return FirebaseAnimatedList(
+                  query: FirebaseDatabase.instance
+                      .reference()
+                      .child('users/' + user.uid),
+                  itemBuilder: (context, snapshot, animation, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                          left: 8.0, right: 8.0, top: 12.0, bottom: 0.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          _launchURL(snapshot.value['articleURL']);
+                        },
+                        child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(const Radius.circular(7.5)),
+                              boxShadow: [
+                                new BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 2.5,
+                                    offset: Offset(0.0, 2.5))
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(children: <Widget>[
+                                Flexible(
+                                  child: Column(
+                                    children: <Widget>[
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 5.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: <Widget>[
+                                            Text(
+                                              snapshot.value['source'],
+                                              style: TextStyle(
+                                                  color: Colors.grey[700],
+                                                  fontSize: 13.0),
+                                            ),
+                                            new CustomDropdownButton<
+                                                List<Object>>(
+                                              isDense: true,
+                                              iconSize: 20.0,
+                                              items: <List<Object>>[
+                                                [
+                                                  '  Save',
+                                                  Icons.bookmark,
+                                                ],
+                                                [
+                                                  '  Customize',
+                                                  Icons.settings,
+                                                ],
+                                              ].map((var value) {
+                                                return new CustomDropdownMenuItem<
+                                                    List<Object>>(
+                                                  value: value,
+                                                  child: new Row(
+                                                    children: <Widget>[
+                                                      Icon(
+                                                        value[1],
+                                                        color: Colors.grey[700],
+                                                      ),
+                                                      Text(
+                                                        value[0],
+                                                        style: TextStyle(
+                                                            fontSize: 12.0),
+                                                      )
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList(),
+                                              onChanged: (value) {
+                                                switch (value[0]) {
+                                                  case '  Save':
+                                                    removeBookMark(
+                                                        FirebaseDatabase
+                                                            .instance
+                                                            .reference()
+                                                            .child('users/' +
+                                                                user.uid).child('/' + snapshot.key));
+                                                    break;
+                                                  case '  Customize':
+                                                    print("Customize");
+                                                    break;
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Row(
+                                        children: <Widget>[
+                                          Flexible(
+                                            child: Column(
+                                              children: <Widget>[
+                                                Text(
+                                                  snapshot.value['title'],
+                                                  style:
+                                                      TextStyle(fontSize: 15.0),
+                                                ),
+                                                Text(
+                                                  snapshot.value[
+                                                      'description'] ??= "",
+                                                  maxLines: 3,
+                                                  style: TextStyle(
+                                                      fontSize: 13.0,
+                                                      color: Colors.grey[600]),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          snapshot.value['imageURL'] != null
+                                              ? Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 2.0),
+                                                  child: ClipRRect(
+                                                    borderRadius: BorderRadius
+                                                        .circular(7.5),
+                                                    child: CachedNetworkImage(
+                                                      height: 75.0,
+                                                      width: 75.0,
+                                                      imageUrl: snapshot
+                                                          .value['imageURL'],
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                )
+                                              : Container(
+                                                  width: 0.0,
+                                                  height: 0.0,
+                                                ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ]),
+                            )),
+                      ),
+                    );
+                  });
+            }
+            return Text("Loading");
+          },
+        ),
+      ),
     );
+  }
+
+  void removeBookMark(DatabaseReference ref) async {
+    ref.remove();
+  }
+}
+
+Future<FirebaseUser> _getUser() async {
+  return await FirebaseAuth.instance.currentUser();
+}
+
+_launchURL(String url) async {
+  if (await canLaunch(url)) {
+    await launch(url);
+  } else {
+    throw 'Could not launch $url';
   }
 }
