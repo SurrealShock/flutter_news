@@ -463,7 +463,7 @@ class BookMarkState extends State<BookMarks> {
                                               }).toList(),
                                               onChanged: (value) {
                                                 switch (value[0]) {
-                                                  case '  Save':
+                                                  case '  Remove bookmark':
                                                     removeBookMark(
                                                         FirebaseDatabase
                                                             .instance
