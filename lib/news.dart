@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'customdropdown.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 
@@ -101,6 +100,9 @@ class MyHomeState extends State<MyHome> {
   List<BookMarkItem> items = List();
   BookMarkItem bookMarkItem;
   DatabaseReference reference;
+  FirebaseUser user;
+  var titles = List<String>();
+  var keys = List<String>();
 
   @override
   void initState() {
@@ -108,25 +110,20 @@ class MyHomeState extends State<MyHome> {
     bookMarkItem = BookMarkItem("", "", "", "", "");
     final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
     _getUser().then((user) {
+      this.user = user;
       reference = firebaseDatabase.reference().child('users/' + user.uid);
       reference.onChildAdded.listen(_onEntryAdded);
-      reference.onChildChanged.listen(_onEntryChanged);
+      reference.onChildRemoved.listen(_onEntryRemoved);
     });
   }
 
   _onEntryAdded(Event event) {
-    setState(() {
-      items.add(BookMarkItem.fromSnapshot(event.snapshot));
-    });
+    titles.add(event.snapshot.value['title']);
+    keys.add(event.snapshot.key);
   }
-
-  _onEntryChanged(Event event) {
-    var old = items.singleWhere((entry) {
-      return entry.key == event.snapshot.key;
-    });
-    setState(() {
-      items[items.indexOf(old)] = BookMarkItem.fromSnapshot(event.snapshot);
-    });
+  _onEntryRemoved(Event event) {
+    titles.remove(event.snapshot.value['title']);
+    keys.remove(event.snapshot.key);
   }
 
   void bookMark() async {
@@ -226,63 +223,74 @@ class MyHomeState extends State<MyHome> {
                                             color: Colors.grey[700],
                                             fontSize: 13.0),
                                       ),
-                                      new CustomDropdownButton<List<Object>>(
-                                        isDense: true,
-                                        iconSize: 20.0,
-                                        items: <List<Object>>[
-                                          [
-                                            '  Save',
-                                            Icons.bookmark_border,
-                                          ],
-                                          [
-                                            '  Customize',
-                                            Icons.settings,
-                                          ],
-                                        ].map((var value) {
-                                          return new CustomDropdownMenuItem<
-                                              List<Object>>(
-                                            value: value,
-                                            child: new Row(
-                                              children: <Widget>[
-                                                Icon(
-                                                  value[1],
-                                                  color: Colors.grey[700],
-                                                ),
-                                                Text(
-                                                  value[0],
-                                                  style:
-                                                      TextStyle(fontSize: 12.0),
-                                                )
-                                              ],
-                                            ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          switch (value[0]) {
-                                            case '  Save':
-                                              bookMarkItem.title =
-                                                  jsonResponse['articles']
-                                                      [index]['title'];
-                                              bookMarkItem.description =
-                                                  jsonResponse['articles']
-                                                          [index]
-                                                      ['description'] ??= "";
-                                              bookMarkItem.imageURL =
-                                                  jsonResponse['articles']
-                                                      [index]['urlToImage'];
-                                              bookMarkItem.source =
-                                                  jsonResponse['articles']
-                                                      [index]['source']['name'];
-                                              bookMarkItem.articleURL =
-                                                  jsonResponse['articles']
-                                                      [index]['url'];
-                                              bookMark();
+                                      new PopupMenuButton<int>(
+                                        icon: Icon(
+                                          Icons.more_vert,
+                                          size: 20.0,
+                                          color: Colors.grey[700],
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (_) {
+                                          List bookmark = isBookmarked( jsonResponse['articles']
+                                                      [index]['title']);
+                                          switch (_) {
+                                            case 0:
+                                              if (!bookmark[0]) {
+                                                bookMarkItem.title =
+                                                    jsonResponse['articles']
+                                                        [index]['title'];
+                                                bookMarkItem.description =
+                                                    jsonResponse['articles']
+                                                            [index]
+                                                        ['description'] ??= "";
+                                                bookMarkItem.imageURL =
+                                                    jsonResponse['articles']
+                                                        [index]['urlToImage'];
+                                                bookMarkItem.source =
+                                                    jsonResponse['articles']
+                                                            [index]['source']
+                                                        ['name'];
+                                                bookMarkItem.articleURL =
+                                                    jsonResponse['articles']
+                                                        [index]['url'];
+                                                bookMark();
+                                              } else {
+                                                removeBookMark(FirebaseDatabase
+                                                    .instance
+                                                    .reference()
+                                                    .child('users/' + user.uid)
+                                                    .child('/' + keys[bookmark[1]]));
+                                              }
                                               break;
-                                            case '  Customize':
-                                              print("Customize");
+                                            case 1:
                                               break;
                                           }
                                         },
+                                        itemBuilder: (BuildContext context)
+                                            {
+                                              bool bookmark = isBookmarked(jsonResponse['articles']
+                                                      [index]['title'])[0];
+                                                      print(bookmark);
+                                              return <PopupMenuEntry<int>>[
+                                              PopupMenuItem<int>(
+                                                value: 0,
+                                                child: Row(
+                                                  children: <Widget>[
+                                                    Icon(bookmark ? Icons.bookmark : Icons.bookmark_border),
+                                                    Text(bookmark ? "Remove bookmark" : "  Bookmark")
+                                                  ],
+                                                ),
+                                              ),
+                                              PopupMenuItem<int>(
+                                                value: 1,
+                                                child: Row(
+                                                  children: <Widget>[
+                                                    Icon(Icons.settings),
+                                                    Text("  Customize")
+                                                  ],
+                                                ),
+                                              ),
+                                            ];},
                                       ),
                                     ],
                                   ),
@@ -361,6 +369,15 @@ class MyHomeState extends State<MyHome> {
     print("Loaded from storage");
     return loadedJson;
   }
+
+  List isBookmarked(String title) {
+    for (int i = 0; i < titles.length; i++) {
+      if (titles[i] == title) {
+        return [true, i];
+      }
+    }
+    return [false, -1];
+  }
 }
 
 class MyHome extends StatefulWidget {
@@ -429,53 +446,54 @@ class BookMarkState extends State<BookMarks> {
                                                   color: Colors.grey[700],
                                                   fontSize: 13.0),
                                             ),
-                                            new CustomDropdownButton<
-                                                List<Object>>(
-                                              isDense: true,
-                                              iconSize: 20.0,
-                                              items: <List<Object>>[
-                                                [
-                                                  '  Remove bookmark',
-                                                  Icons.bookmark,
-                                                ],
-                                                [
-                                                  '  Customize',
-                                                  Icons.settings,
-                                                ],
-                                              ].map((var value) {
-                                                return new CustomDropdownMenuItem<
-                                                    List<Object>>(
-                                                  value: value,
-                                                  child: new Row(
-                                                    children: <Widget>[
-                                                      Icon(
-                                                        value[1],
-                                                        color: Colors.grey[700],
-                                                      ),
-                                                      Text(
-                                                        value[0],
-                                                        style: TextStyle(
-                                                            fontSize: 12.0),
-                                                      )
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList(),
-                                              onChanged: (value) {
-                                                switch (value[0]) {
-                                                  case '  Remove bookmark':
+                                            new PopupMenuButton<int>(
+                                              icon: Icon(
+                                                Icons.more_vert,
+                                                size: 20.0,
+                                                color: Colors.grey[700],
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              onSelected: (_) {
+                                                switch (_) {
+                                                  case 0:
                                                     removeBookMark(
                                                         FirebaseDatabase
                                                             .instance
                                                             .reference()
                                                             .child('users/' +
-                                                                user.uid).child('/' + snapshot.key));
+                                                                user.uid)
+                                                            .child('/' +
+                                                                snapshot.key));
                                                     break;
-                                                  case '  Customize':
-                                                    print("Customize");
+                                                  case 1:
+                                                    print("Todo");
                                                     break;
                                                 }
+                                                ;
                                               },
+                                              itemBuilder: (BuildContext
+                                                      context) =>
+                                                  <PopupMenuEntry<int>>[
+                                                    PopupMenuItem<int>(
+                                                      value: 0,
+                                                      child: Row(
+                                                        children: <Widget>[
+                                                          Icon(Icons.bookmark),
+                                                          Text(
+                                                              "  Remove Bookmark")
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    PopupMenuItem<int>(
+                                                      value: 1,
+                                                      child: Row(
+                                                        children: <Widget>[
+                                                          Icon(Icons.settings),
+                                                          Text("  Customize")
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
                                             ),
                                           ],
                                         ),
@@ -539,10 +557,10 @@ class BookMarkState extends State<BookMarks> {
       ),
     );
   }
+}
 
-  void removeBookMark(DatabaseReference ref) async {
-    ref.remove();
-  }
+void removeBookMark(DatabaseReference ref) async {
+  ref.remove();
 }
 
 Future<FirebaseUser> _getUser() async {
