@@ -3,12 +3,17 @@ import 'news.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  FirebaseAuth.instance.currentUser().then((data) {
+    runApp(MyApp(login: data == null ? false : true,)) ;
+  });
+}
 
 class MyApp extends StatelessWidget {
+  final login;
+  MyApp({this.login});
   @override
   Widget build(BuildContext context) {
-    print(FirebaseAuth.instance.currentUser());
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       routes: {
@@ -16,7 +21,7 @@ class MyApp extends StatelessWidget {
         "login": (context) => Login(),
       },
       //TODO: Check if logged in
-      home: Login(),
+      home: login ? News() : Login(),
     );
   }
 }

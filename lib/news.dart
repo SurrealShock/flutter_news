@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_news/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,50 +20,61 @@ class NewsState extends State<News> {
   int index = 0;
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            Offstage(
-              offstage: index != 0,
-              child: TickerMode(
-                enabled: index == 0,
-                child: MaterialApp(home: MyHome()),
+    return WillPopScope(
+      // Disallow swiping back to login screen
+      onWillPop: () => Future.value(false),
+      child: MaterialApp(
+        theme: ThemeData(
+            textTheme: TextTheme(
+                headline: TextStyle(fontSize: 15.0),
+                body1: TextStyle(fontSize: 13.0, color: Colors.grey[600]))),
+        home: Scaffold(
+          // Create stack to load both pages
+          body: Stack(
+            children: <Widget>[
+              // When not in use don't load graphics
+              Offstage(
+                offstage: index != 0,
+                child: TickerMode(
+                  enabled: index == 0,
+                  child: MaterialApp(home: MyHome()),
+                ),
               ),
-            ),
-            Offstage(
-              offstage: index != 1,
-              child: TickerMode(
-                enabled: index == 1,
-                child: MaterialApp(home: BookMarks()),
+              Offstage(
+                offstage: index != 1,
+                child: TickerMode(
+                  enabled: index == 1,
+                  child: MaterialApp(home: BookMarks()),
+                ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: new BottomNavigationBar(
-          currentIndex: index,
-          onTap: (int index) {
-            setState(() {
-              this.index = index;
-            });
-          },
-          items: <BottomNavigationBarItem>[
-            new BottomNavigationBarItem(
-              icon: new Icon(Icons.home),
-              title: new Text("Home"),
-            ),
-            new BottomNavigationBarItem(
-              icon: new Icon(Icons.collections_bookmark),
-              title: new Text("Bookmarks"),
-            ),
-          ],
+            ],
+          ),
+          // Create bottom navbar with home and bookmarks nav
+          bottomNavigationBar: new BottomNavigationBar(
+            currentIndex: index,
+            onTap: (index) {
+              setState(() {
+                this.index = index;
+              });
+            },
+            items: <BottomNavigationBarItem>[
+              new BottomNavigationBarItem(
+                icon: new Icon(Icons.home),
+                title: new Text("Home"),
+              ),
+              new BottomNavigationBarItem(
+                icon: new Icon(Icons.collections_bookmark),
+                title: new Text("Bookmarks"),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// BookMarkItem keeps track of the current values displayed on the cards
 class BookMarkItem {
   String key;
   String title;
@@ -94,15 +105,12 @@ class BookMarkItem {
 }
 
 class MyHomeState extends State<MyHome> {
-  bool notNull(Object o) => o != null;
   final currentTime = new DateTime.now();
-
   List<BookMarkItem> items = List();
   BookMarkItem bookMarkItem;
   DatabaseReference reference;
   FirebaseUser user;
-  var titles = List<String>();
-  var keys = List<String>();
+  var data = Map();
 
   @override
   void initState() {
@@ -118,12 +126,11 @@ class MyHomeState extends State<MyHome> {
   }
 
   _onEntryAdded(Event event) {
-    titles.add(event.snapshot.value['title']);
-    keys.add(event.snapshot.key);
+    data[event.snapshot.value['title']] = event.snapshot.key;
   }
+
   _onEntryRemoved(Event event) {
-    titles.remove(event.snapshot.value['title']);
-    keys.remove(event.snapshot.key);
+    data.remove(event.snapshot.value['title']);
   }
 
   void bookMark() async {
@@ -178,25 +185,15 @@ class MyHomeState extends State<MyHome> {
             return ListView.builder(
               itemCount: jsonResponse['totalResults'],
               itemBuilder: (context, index) {
+                setBookmarkItem(jsonResponse, index);
                 return Padding(
                   padding: const EdgeInsets.only(
                       left: 8.0, right: 8.0, top: 12.0, bottom: 0.0),
                   child: GestureDetector(
                     onTap: () {
-                      _launchURL(jsonResponse['articles'][index]['url']);
+                      _launchURL(bookMarkItem.articleURL);
                     },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                            BorderRadius.all(const Radius.circular(7.5)),
-                        boxShadow: [
-                          new BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 2.5,
-                              offset: Offset(0.0, 2.5))
-                        ],
-                      ),
+                    child: NewsCard(
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Row(children: <Widget>[
@@ -217,11 +214,10 @@ class MyHomeState extends State<MyHome> {
                                                 .inHours
                                                 .toString() +
                                             " hr ago · " +
-                                            jsonResponse['articles'][index]
-                                                ['source']['name'],
+                                            bookMarkItem.source,
                                         style: TextStyle(
-                                            color: Colors.grey[700],
-                                            fontSize: 13.0),
+                                            fontSize: 13.0,
+                                            color: Colors.grey[700]),
                                       ),
                                       new PopupMenuButton<int>(
                                         icon: Icon(
@@ -231,66 +227,55 @@ class MyHomeState extends State<MyHome> {
                                         ),
                                         padding: EdgeInsets.zero,
                                         onSelected: (_) {
-                                          List bookmark = isBookmarked( jsonResponse['articles']
-                                                      [index]['title']);
                                           switch (_) {
                                             case 0:
-                                              if (!bookmark[0]) {
-                                                bookMarkItem.title =
-                                                    jsonResponse['articles']
-                                                        [index]['title'];
-                                                bookMarkItem.description =
-                                                    jsonResponse['articles']
-                                                            [index]
-                                                        ['description'] ??= "";
-                                                bookMarkItem.imageURL =
-                                                    jsonResponse['articles']
-                                                        [index]['urlToImage'];
-                                                bookMarkItem.source =
-                                                    jsonResponse['articles']
-                                                            [index]['source']
-                                                        ['name'];
-                                                bookMarkItem.articleURL =
-                                                    jsonResponse['articles']
-                                                        [index]['url'];
+                                              if (!data.containsKey(
+                                                  bookMarkItem.title)) {
+                                                setBookmarkItem(
+                                                    jsonResponse, index);
                                                 bookMark();
                                               } else {
                                                 removeBookMark(FirebaseDatabase
                                                     .instance
                                                     .reference()
                                                     .child('users/' + user.uid)
-                                                    .child('/' + keys[bookmark[1]]));
+                                                    .child('/' +
+                                                        data[bookMarkItem
+                                                            .title]));
                                               }
                                               break;
                                             case 1:
                                               break;
                                           }
                                         },
-                                        itemBuilder: (BuildContext context)
-                                            {
-                                              bool bookmark = isBookmarked(jsonResponse['articles']
-                                                      [index]['title'])[0];
-                                                      print(bookmark);
-                                              return <PopupMenuEntry<int>>[
-                                              PopupMenuItem<int>(
-                                                value: 0,
-                                                child: Row(
-                                                  children: <Widget>[
-                                                    Icon(bookmark ? Icons.bookmark : Icons.bookmark_border),
-                                                    Text(bookmark ? "Remove bookmark" : "  Bookmark")
-                                                  ],
-                                                ),
+                                        itemBuilder: (BuildContext context) {
+                                          bool bookmark = data
+                                              .containsKey(bookMarkItem.title);
+                                          return <PopupMenuEntry<int>>[
+                                            PopupMenuItem<int>(
+                                              value: 0,
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Icon(bookmark
+                                                      ? Icons.bookmark
+                                                      : Icons.bookmark_border),
+                                                  Text(bookmark
+                                                      ? "Remove bookmark"
+                                                      : "  Bookmark")
+                                                ],
                                               ),
-                                              PopupMenuItem<int>(
-                                                value: 1,
-                                                child: Row(
-                                                  children: <Widget>[
-                                                    Icon(Icons.settings),
-                                                    Text("  Customize")
-                                                  ],
-                                                ),
+                                            ),
+                                            PopupMenuItem<int>(
+                                              value: 1,
+                                              child: Row(
+                                                children: <Widget>[
+                                                  Icon(Icons.settings),
+                                                  Text("  Customize")
+                                                ],
                                               ),
-                                            ];},
+                                            ),
+                                          ];
+                                        },
                                       ),
                                     ],
                                   ),
@@ -298,45 +283,15 @@ class MyHomeState extends State<MyHome> {
                                 Row(
                                   children: <Widget>[
                                     Flexible(
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            jsonResponse['articles'][index]
-                                                ['title'],
-                                            style: TextStyle(fontSize: 15.0),
-                                          ),
-                                          Text(
-                                            jsonResponse['articles'][index]
-                                                ['description'] ??= "",
-                                            maxLines: 3,
-                                            style: TextStyle(
-                                                fontSize: 13.0,
-                                                color: Colors.grey[600]),
-                                          ),
-                                        ],
-                                      ),
+                                      child: CardText(
+                                        title: bookMarkItem.title,
+                                        body: bookMarkItem.description,
+                                      )
                                     ),
-                                    jsonResponse['articles'][index]
-                                                ['urlToImage'] !=
-                                            null
-                                        ? Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 2.0),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(7.5),
-                                              child: CachedNetworkImage(
-                                                height: 75.0,
-                                                width: 75.0,
-                                                imageUrl:
-                                                    jsonResponse['articles']
-                                                        [index]['urlToImage'],
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                          )
-                                        : null,
-                                  ].where(notNull).toList(),
+                                    ImageContainer(
+                                      url: bookMarkItem.imageURL,
+                                    )
+                                  ],
                                 ),
                               ],
                             ),
@@ -370,13 +325,13 @@ class MyHomeState extends State<MyHome> {
     return loadedJson;
   }
 
-  List isBookmarked(String title) {
-    for (int i = 0; i < titles.length; i++) {
-      if (titles[i] == title) {
-        return [true, i];
-      }
-    }
-    return [false, -1];
+  setBookmarkItem(final jsonResponse, int index) {
+    bookMarkItem.title = jsonResponse['articles'][index]['title'];
+    bookMarkItem.description =
+        jsonResponse['articles'][index]['description'] ??= "";
+    bookMarkItem.imageURL = jsonResponse['articles'][index]['urlToImage'];
+    bookMarkItem.source = jsonResponse['articles'][index]['source']['name'];
+    bookMarkItem.articleURL = jsonResponse['articles'][index]['url'];
   }
 }
 
@@ -396,6 +351,40 @@ class BookMarkState extends State<BookMarks> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Bookmarks"),
+        centerTitle: true,
+        actions: <Widget>[
+          StreamBuilder(
+            stream: FirebaseAuth.instance.currentUser().asStream(),
+            builder:
+                (BuildContext context, AsyncSnapshot<FirebaseUser> snapshot) {
+              if (snapshot.hasData) {
+                return Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(96.0),
+                      boxShadow: [
+                        new BoxShadow(
+                            color: Colors.black54,
+                            blurRadius: 0.75,
+                            offset: Offset(0.0, 1.0))
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(96.0),
+                      child: Image.network(snapshot.data.photoUrl),
+                    ),
+                  ),
+                );
+              } else {
+                return Container(
+                  height: 0.0,
+                  width: 0.0,
+                );
+              }
+            },
+          )
+        ]
       ),
       body: Center(
         child: FutureBuilder(
@@ -415,143 +404,95 @@ class BookMarkState extends State<BookMarks> {
                         onTap: () {
                           _launchURL(snapshot.value['articleURL']);
                         },
-                        child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.all(const Radius.circular(7.5)),
-                              boxShadow: [
-                                new BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 2.5,
-                                    offset: Offset(0.0, 2.5))
-                              ],
-                            ),
+                        child: NewsCard(
                             child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(children: <Widget>[
-                                Flexible(
-                                  child: Column(
-                                    children: <Widget>[
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 5.0),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            Text(
-                                              snapshot.value['source'],
-                                              style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                  fontSize: 13.0),
-                                            ),
-                                            new PopupMenuButton<int>(
-                                              icon: Icon(
-                                                Icons.more_vert,
-                                                size: 20.0,
-                                                color: Colors.grey[700],
-                                              ),
-                                              padding: EdgeInsets.zero,
-                                              onSelected: (_) {
-                                                switch (_) {
-                                                  case 0:
-                                                    removeBookMark(
-                                                        FirebaseDatabase
-                                                            .instance
-                                                            .reference()
-                                                            .child('users/' +
-                                                                user.uid)
-                                                            .child('/' +
-                                                                snapshot.key));
-                                                    break;
-                                                  case 1:
-                                                    print("Todo");
-                                                    break;
-                                                }
-                                                ;
-                                              },
-                                              itemBuilder: (BuildContext
-                                                      context) =>
-                                                  <PopupMenuEntry<int>>[
-                                                    PopupMenuItem<int>(
-                                                      value: 0,
-                                                      child: Row(
-                                                        children: <Widget>[
-                                                          Icon(Icons.bookmark),
-                                                          Text(
-                                                              "  Remove Bookmark")
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    PopupMenuItem<int>(
-                                                      value: 1,
-                                                      child: Row(
-                                                        children: <Widget>[
-                                                          Icon(Icons.settings),
-                                                          Text("  Customize")
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                            ),
-                                          ],
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(children: <Widget>[
+                            Flexible(
+                              child: Column(
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 5.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        Text(
+                                          snapshot.value['source'],
+                                          style:
+                                            TextStyle(fontSize: 13.0, color: Colors.grey[700]),
                                         ),
-                                      ),
-                                      Row(
-                                        children: <Widget>[
-                                          Flexible(
-                                            child: Column(
-                                              children: <Widget>[
-                                                Text(
-                                                  snapshot.value['title'],
-                                                  style:
-                                                      TextStyle(fontSize: 15.0),
+                                        new PopupMenuButton<int>(
+                                          icon: Icon(
+                                            Icons.more_vert,
+                                            size: 20.0,
+                                            color: Colors.grey[700],
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          onSelected: (_) {
+                                            switch (_) {
+                                              case 0:
+                                                removeBookMark(FirebaseDatabase
+                                                    .instance
+                                                    .reference()
+                                                    .child('users/' + user.uid)
+                                                    .child('/' + snapshot.key));
+                                                break;
+                                              case 1:
+                                                print("Todo");
+                                                break;
+                                            }
+                                          },
+                                          itemBuilder: (BuildContext context) =>
+                                              <PopupMenuEntry<int>>[
+                                                PopupMenuItem<int>(
+                                                  value: 0,
+                                                  child: Row(
+                                                    children: <Widget>[
+                                                      Icon(Icons.bookmark),
+                                                      Text("  Remove Bookmark")
+                                                    ],
+                                                  ),
                                                 ),
-                                                Text(
-                                                  snapshot.value[
-                                                      'description'] ??= "",
-                                                  maxLines: 3,
-                                                  style: TextStyle(
-                                                      fontSize: 13.0,
-                                                      color: Colors.grey[600]),
+                                                PopupMenuItem<int>(
+                                                  value: 1,
+                                                  child: Row(
+                                                    children: <Widget>[
+                                                      Icon(Icons.settings),
+                                                      Text("  Customize")
+                                                    ],
+                                                  ),
                                                 ),
                                               ],
-                                            ),
-                                          ),
-                                          snapshot.value['imageURL'] != null
-                                              ? Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 2.0),
-                                                  child: ClipRRect(
-                                                    borderRadius: BorderRadius
-                                                        .circular(7.5),
-                                                    child: CachedNetworkImage(
-                                                      height: 75.0,
-                                                      width: 75.0,
-                                                      imageUrl: snapshot
-                                                          .value['imageURL'],
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
-                                                )
-                                              : Container(
-                                                  width: 0.0,
-                                                  height: 0.0,
-                                                ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    children: <Widget>[
+                                      Flexible(
+                                          child: CardText(
+                                        title: snapshot.value['title'],
+                                        body: snapshot.value['description'],
+                                      )),
+                                      ImageContainer(
+                                        url: snapshot.value['imageURL'],
+                                      )
                                     ],
                                   ),
-                                ),
-                              ]),
-                            )),
+                                ],
+                              ),
+                            ),
+                          ]),
+                        )),
                       ),
                     );
                   });
             }
-            return Text("Loading");
+            return new Center(
+                child: CircularProgressIndicator(
+                    valueColor:
+                        new AlwaysStoppedAnimation<Color>(Colors.blue)));
           },
         ),
       ),

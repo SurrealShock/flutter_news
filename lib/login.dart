@@ -6,7 +6,7 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future<bool> logIn() async {
-      final user = await authentication.authWithGoogle();
+      final user = await Auth.authWithGoogle();
       if (user != null) {
         return true;
       } else {
@@ -39,9 +39,9 @@ class Login extends StatelessWidget {
                               // This text from the AlrtDialog sample I swear I didn't put this here
                               // Will fix later
                               children: <Widget>[
-                                new Text('You will never be satisfied.'),
+                                new Text('something something'),
                                 new Text(
-                                    'You\’re like me. I’m never satisfied.'),
+                                    'still need to test this'),
                               ],
                             ),
                           ),
