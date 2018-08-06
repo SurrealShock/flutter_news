@@ -116,7 +116,7 @@ class HomeState extends State<Home> {
                           padding: const EdgeInsets.all(12.0),
                           child: Row(children: <Widget>[
                             NewsCard(
-                                bookMarkItem,
+                                bookMarkItem[index],
                                 index,
                                 PopupMenuButton<int>(
                                   icon: Icon(
@@ -182,16 +182,14 @@ class HomeState extends State<Home> {
                 );
               },
             );
+          } else {
+            return ListView.builder(
+                itemCount: 10,
+                itemBuilder: (context, index) {
+                  return LoadingCard(index + 5);
+                });
           }
-          return Container(
-            height: 0.0,
-            width: 0.0,
-          );
-          // return ListView.builder(
-          //   itemCount: 10,
-          //   itemBuilder: (context, index) {
-          //     return LoadingCard(index + 5);
-          //   });
+          
         },
       ),
     );
