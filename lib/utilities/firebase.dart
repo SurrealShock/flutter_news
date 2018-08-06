@@ -5,7 +5,6 @@ import 'dart:async';
 class Auth {
   static FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   static GoogleSignIn googleSignIn = GoogleSignIn();
-
   FirebaseUser firebaseUser;
   Auth(FirebaseUser user) {
     this.firebaseUser = user;
@@ -13,8 +12,9 @@ class Auth {
 
   static Future<Auth> authWithGoogle() async {
     final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
-    final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
-    
+    final GoogleSignInAuthentication googleSignInAuthentication =
+        await googleSignInAccount.authentication;
+
     final FirebaseUser user = await firebaseAuth.signInWithGoogle(
       accessToken: googleSignInAuthentication.accessToken,
       idToken: googleSignInAuthentication.idToken,
@@ -29,5 +29,13 @@ class Auth {
     assert(user.uid == currentUser.uid);
 
     return Auth(user);
+  }
+
+  static void signOutFirebase() async {
+    await firebaseAuth.signOut();
+  }
+
+  static Future<FirebaseUser> getUser() async {
+    return await firebaseAuth.currentUser();
   }
 }
