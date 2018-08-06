@@ -12,12 +12,6 @@ class NewsState extends State<News> {
   int index = 0;
 
   @override
-  void deactivate() {
-    print("pressed");
-    super.deactivate();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return WillPopScope(
       // Disallow swiping back to login screen

@@ -12,14 +12,14 @@ class BookMarkItem {
 
   BookMarkItem(this.title, this.description, this.imageURL, this.source,
       this.articleURL, this.published);
-  factory BookMarkItem.fromSnapshot(DataSnapshot snapshot) {
+  factory BookMarkItem.fromSnapshot(final snapshot) {
     return BookMarkItem(
-        snapshot.value['title'],
-        snapshot.value['description'],
-        snapshot.value['imageURL'],
-        snapshot.value['source'],
-        snapshot.value['articleURL'],
-        snapshot.value['publishedAt']);
+        snapshot['title'],
+        snapshot['description'],
+        snapshot['imageURL'],
+        snapshot['source'],
+        snapshot['articleURL'],
+        snapshot['publishedAt']);
   }
 
   factory BookMarkItem.fromJson(Map j) {

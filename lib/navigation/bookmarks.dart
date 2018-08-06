@@ -14,7 +14,7 @@ class BookMarks extends StatefulWidget {
 }
 
 class BookMarkState extends State<BookMarks> {
-  List<BookMarkItem> bookMarkItem = [];
+  BookMarkItem bookMarkItem;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,13 +54,13 @@ class BookMarkState extends State<BookMarks> {
                       .reference()
                       .child('users/' + user.uid),
                   itemBuilder: (context, snapshot, animation, index) {
-                    bookMarkItem.add(BookMarkItem.fromSnapshot(snapshot.value));
+                    bookMarkItem = BookMarkItem.fromSnapshot(snapshot.value);
                     return Padding(
                       padding: const EdgeInsets.only(
                           left: 8.0, right: 8.0, top: 12.0, bottom: 0.0),
                       child: GestureDetector(
                         onTap: () {
-                          launchURL(bookMarkItem[index].articleURL);
+                          launchURL(bookMarkItem.articleURL);
                         },
                         child: NewsContainer(
                             child: Padding(
@@ -68,7 +68,6 @@ class BookMarkState extends State<BookMarks> {
                           child: Row(children: <Widget>[
                             NewsCard(
                                 bookMarkItem,
-                                index,
                                 PopupMenuButton<int>(
                                   icon: Icon(
                                     Icons.more_vert,

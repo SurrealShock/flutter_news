@@ -70,7 +70,7 @@ Widget ProfilePicture(String url) {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(76.0),
-            child: CachedNetworkImage(imageUrl: url, placeholder: Icon(Icons.image)),
+            child: CachedNetworkImage(imageUrl: url, placeholder: Icon(Icons.image, size: 38.0, color: Colors.white70)),
           )));
 }
 
@@ -89,7 +89,7 @@ class ImageContainer extends StatelessWidget {
                 width: 75.0,
                 imageUrl: url,
                 fit: BoxFit.cover,
-                placeholder: Icon(Icons.image)
+                placeholder: Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
               ),
             ),
           )
@@ -103,8 +103,7 @@ class ImageContainer extends StatelessWidget {
 class NewsCard extends StatelessWidget {
   Widget customPopUpMenu;
   final bookMarkItem;
-  final index;
-  NewsCard(this.bookMarkItem, this.index, this.customPopUpMenu);
+  NewsCard(this.bookMarkItem, this.customPopUpMenu);
   @override
   Widget build(BuildContext context) {
     return Flexible(
@@ -117,11 +116,11 @@ class NewsCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   (DateTime.now().difference(DateTime.parse(
-                              bookMarkItem['publishedAt'])))
+                              bookMarkItem.published)))
                           .inHours
                           .toString() +
                       " hr ago · " +
-                      bookMarkItem[index].source,
+                      bookMarkItem.source,
                   style: TextStyle(fontSize: 13.0, color: Colors.grey[700]),
                 ),
                 customPopUpMenu,
@@ -132,11 +131,11 @@ class NewsCard extends StatelessWidget {
             children: <Widget>[
               Flexible(
                   child: CardText(
-                title: bookMarkItem[index].title,
-                body: bookMarkItem[index].description,
+                title: bookMarkItem.title,
+                body: bookMarkItem.description,
               )),
               ImageContainer(
-                url: bookMarkItem[index].imageURL,
+                url: bookMarkItem.imageURL,
               )
             ],
           ),
@@ -186,6 +185,12 @@ class LoadingCardState extends State<LoadingCard>
       });
     _animateForward();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    loadingOpacity.dispose();
+    super.dispose();
   }
 
   void _animateForward() async {

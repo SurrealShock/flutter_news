@@ -46,9 +46,8 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
       }
     }
 
-    return WillPopScope(
-      onWillPop: () => Future.value(false),
-      child: Scaffold(
+    return MaterialApp(
+      home: Scaffold(
         body: Center(
           child: GestureDetector(
             onTap: () async {
@@ -84,7 +83,7 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(30.0)),
               child: _width.value > 95
                   ? Text(
-                      'Google login',
+                      'Sign in with Google',
                       style: TextStyle(fontSize: 17.0, color: Colors.white),
                     )
                   : CircularProgressIndicator(

@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
                 Icons.library_books,
                 color: Colors.blue,
                 size: 128.0,
+                textDirection: TextDirection.ltr,
               ),
             ),
           );

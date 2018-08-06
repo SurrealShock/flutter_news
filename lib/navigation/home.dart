@@ -26,6 +26,7 @@ class HomeState extends State<Home> {
   var data = Map();
 
   void bookMark(BookMarkItem bMrkItm) async {
+
     reference.push().set(bMrkItm.toJson());
   }
 
@@ -117,7 +118,6 @@ class HomeState extends State<Home> {
                           child: Row(children: <Widget>[
                             NewsCard(
                                 bookMarkItem[index],
-                                index,
                                 PopupMenuButton<int>(
                                   icon: Icon(
                                     Icons.more_vert,
@@ -189,7 +189,6 @@ class HomeState extends State<Home> {
                   return LoadingCard(index + 5);
                 });
           }
-          
         },
       ),
     );
