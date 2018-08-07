@@ -186,7 +186,7 @@ class HomeState extends State<Home> {
             return ListView.builder(
                 itemCount: 10,
                 itemBuilder: (context, index) {
-                  return LoadingCard(index + 5);
+                  return LoadingCard();
                 });
           }
         },

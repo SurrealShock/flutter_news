@@ -150,24 +150,25 @@ Widget Recommendations(List recommend) {
     // padding: EdgeInsets.only(top: 4.0, bottom: 0.0),
     itemCount: recommend.length,
     itemBuilder: (context, index) {
-      Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: Text(recommend[index], textAlign: TextAlign.center),
+      return GestureDetector(
+        onTap: () {
+          
+        },
+              child: Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
+          child: Text(recommend[index], textAlign: TextAlign.center),
+        ),
       );
     },
   );
 }
 
 class LoadingCard extends StatefulWidget {
-  final seed;
-  LoadingCard(this.seed);
-  LoadingCardState createState() => LoadingCardState(seed);
+  LoadingCardState createState() => LoadingCardState();
 }
 
 class LoadingCardState extends State<LoadingCard>
     with SingleTickerProviderStateMixin {
-  final seed;
-  LoadingCardState(this.seed);
   AnimationController loadingOpacity;
   Animation opacity;
   Random rand;
@@ -175,7 +176,7 @@ class LoadingCardState extends State<LoadingCard>
 
   @override
   void initState() {
-    rand = Random(seed);
+    rand = Random();
     divideFactor = (rand.nextInt(5) + 1.4);
     loadingOpacity = AnimationController(
         vsync: this, duration: Duration(milliseconds: 1500));

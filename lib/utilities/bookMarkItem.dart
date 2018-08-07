@@ -12,7 +12,7 @@ class BookMarkItem {
 
   BookMarkItem(this.title, this.description, this.imageURL, this.source,
       this.articleURL, this.published);
-  factory BookMarkItem.fromSnapshot(final snapshot) {
+  factory BookMarkItem.fromSnapshot(dynamic snapshot) {
     return BookMarkItem(
         snapshot['title'],
         snapshot['description'],
