@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -71,8 +71,8 @@ Widget ProfilePicture(String url) {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(76.0),
-            child: CachedNetworkImage(imageUrl: url, placeholder: Icon(Icons.image, size: 38.0, color: Colors.white70)),
-          )));
+            child: Image(image: AdvancedNetworkImage(url, useDiskCache: true,),
+          ))));
 }
 
 class ImageContainer extends StatelessWidget {
@@ -85,12 +85,12 @@ class ImageContainer extends StatelessWidget {
             padding: const EdgeInsets.only(left: 2.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(7.5),
-              child: CachedNetworkImage(
+              child: Image(
+                image: AdvancedNetworkImage(url, useDiskCache: true),
                 height: 75.0,
                 width: 75.0,
-                imageUrl: url,
                 fit: BoxFit.cover,
-                placeholder: Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
+                // placeholder: Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
               ),
             ),
           )
