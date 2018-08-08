@@ -1,4 +1,4 @@
-import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -71,8 +71,11 @@ Widget ProfilePicture(String url) {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(76.0),
-            child: Image(image: AdvancedNetworkImage(url, useDiskCache: true,),
-          ))));
+            child: CachedNetworkImage(
+                imageUrl: url,
+                placeholder:
+                    Icon(Icons.image, size: 38.0, color: Colors.white70)),
+          )));
 }
 
 class ImageContainer extends StatelessWidget {
@@ -85,12 +88,13 @@ class ImageContainer extends StatelessWidget {
             padding: const EdgeInsets.only(left: 2.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(7.5),
-              child: Image(
-                image: AdvancedNetworkImage(url, useDiskCache: true),
+              child: CachedNetworkImage(
                 height: 75.0,
                 width: 75.0,
+                imageUrl: url,
                 fit: BoxFit.cover,
-                // placeholder: Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
+                placeholder:
+                    Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
               ),
             ),
           )
@@ -104,7 +108,8 @@ class ImageContainer extends StatelessWidget {
 class NewsCard extends StatelessWidget {
   Widget customPopUpMenu;
   final bookMarkItem;
-  NewsCard(this.bookMarkItem, this.customPopUpMenu);
+  final showDate;
+  NewsCard({this.bookMarkItem, this.customPopUpMenu, this.showDate = true});
   @override
   Widget build(BuildContext context) {
     return Flexible(
@@ -115,15 +120,22 @@ class NewsCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(
-                  (DateTime.now().difference(DateTime.parse(
-                              bookMarkItem.published)))
-                          .inHours
-                          .toString() +
-                      " hr ago · " +
-                      bookMarkItem.source,
-                  style: TextStyle(fontSize: 13.0, color: Colors.grey[700]),
-                ),
+                showDate
+                    ? Text(
+                        (DateTime.now().difference(
+                                    DateTime.parse(bookMarkItem.published)))
+                                .inHours
+                                .toString() +
+                            " hr ago · " +
+                            bookMarkItem.source,
+                        style:
+                            TextStyle(fontSize: 13.0, color: Colors.grey[700]),
+                      )
+                    : Text(
+                        bookMarkItem.source,
+                        style:
+                            TextStyle(fontSize: 13.0, color: Colors.grey[700]),
+                      ),
                 customPopUpMenu,
               ],
             ),
@@ -152,10 +164,8 @@ Widget Recommendations(List recommend) {
     itemCount: recommend.length,
     itemBuilder: (context, index) {
       return GestureDetector(
-        onTap: () {
-          
-        },
-              child: Padding(
+        onTap: () {},
+        child: Padding(
           padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(recommend[index], textAlign: TextAlign.center),
         ),

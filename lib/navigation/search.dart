@@ -102,11 +102,13 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
     } else {
       query = search;
     }
-        print('got here');
+    print('got here');
 
-    var fetch = await fetchUrl.fetch(
-        'https://newsapi.org/v2/everything?q=' + query + '&sortBy=popularity&apiKey=' + apiKey);
-        print('got here');
+    var fetch = await fetchUrl.fetch('https://newsapi.org/v2/everything?q=' +
+        query +
+        '&sortBy=popularity&apiKey=' +
+        apiKey);
+    print('got here');
     setState(() {
       fetchStatus = FetchStatus.fetched;
     });
@@ -166,8 +168,9 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
                     padding: const EdgeInsets.all(12.0),
                     child: Row(children: <Widget>[
                       NewsCard(
-                          bookMarkItem[index],
-                          PopupMenuButton<int>(
+                          showDate: false,
+                          bookMarkItem: bookMarkItem[index],
+                          customPopUpMenu: PopupMenuButton<int>(
                             icon: Icon(
                               Icons.more_vert,
                               size: 20.0,

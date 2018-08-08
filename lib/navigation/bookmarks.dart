@@ -67,8 +67,9 @@ class BookMarkState extends State<BookMarks> {
                           padding: const EdgeInsets.all(12.0),
                           child: Row(children: <Widget>[
                             NewsCard(
-                                bookMarkItem,
-                                PopupMenuButton<int>(
+                                bookMarkItem: bookMarkItem,
+                                showDate: false,
+                                customPopUpMenu: PopupMenuButton<int>(
                                   icon: Icon(
                                     Icons.more_vert,
                                     size: 20.0,

@@ -117,8 +117,9 @@ class HomeState extends State<Home> {
                           padding: const EdgeInsets.all(12.0),
                           child: Row(children: <Widget>[
                             NewsCard(
-                                bookMarkItem[index],
-                                PopupMenuButton<int>(
+                              showDate: true,
+                                bookMarkItem: bookMarkItem[index],
+                                customPopUpMenu: PopupMenuButton<int>(
                                   icon: Icon(
                                     Icons.more_vert,
                                     size: 20.0,
