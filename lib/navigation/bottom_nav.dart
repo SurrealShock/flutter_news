@@ -16,8 +16,7 @@ class NewsState extends State<News> {
     return WillPopScope(
       // Disallow swiping back to login screen
       onWillPop: () => Future.value(false),
-      child: MaterialApp(
-        home: Scaffold(
+        child: Scaffold(
           // Create stack to load both pages/
           // Also allows data persistence when switchting between pages
           body: Stack(
@@ -59,7 +58,6 @@ class NewsState extends State<News> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

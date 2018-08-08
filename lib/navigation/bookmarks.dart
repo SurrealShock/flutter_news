@@ -38,7 +38,7 @@ class BookMarkState extends State<BookMarks> {
           onPressed: () {
             Navigator
                 .of(context)
-                .push(MaterialPageRoute(builder: (context) => Search()));
+                .pushReplacement(MaterialPageRoute(builder: (context) => Search()));
           },
           icon: Icon(Icons.search),
         )

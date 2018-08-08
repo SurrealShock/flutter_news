@@ -16,7 +16,7 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
     _buttonWidthController = AnimationController(
         duration: const Duration(milliseconds: 150), vsync: this);
     _width = Tween(
-      begin: 150.0,
+      begin: 175.0,
       end: 60.0,
     ).animate(_buttonWidthController)
       ..addListener(() {
@@ -46,8 +46,7 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
       }
     }
 
-    return MaterialApp(
-      home: Scaffold(
+    return Scaffold(
         body: Center(
           child: GestureDetector(
             onTap: () async {
@@ -55,7 +54,7 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
               signedIn
                   ? Navigator
                       .of(context)
-                      .push(MaterialPageRoute(builder: (context) => News()))
+                      .pushReplacement(MaterialPageRoute(builder: (context) => News()))
                   : showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -92,7 +91,6 @@ class LoginState extends State<Login> with SingleTickerProviderStateMixin {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

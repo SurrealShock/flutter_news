@@ -13,25 +13,29 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Check if user is logged in
-    return FutureBuilder(
-      future: getUser(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data ? News() : Login();
-        } else {
-          return Container(
-            color: Colors.white,
-            child: Center(
-              child: Icon(
-                Icons.library_books,
-                color: Colors.blue,
-                size: 128.0,
-                textDirection: TextDirection.ltr,
+    return MaterialApp(
+      home: FutureBuilder(
+        future: getUser(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return snapshot.data
+                ? News()
+                : Login();
+          } else {
+            return Container(
+              color: Colors.white,
+              child: Center(
+                child: Icon(
+                  Icons.library_books,
+                  color: Colors.blue,
+                  size: 128.0,
+                  textDirection: TextDirection.ltr,
+                ),
               ),
-            ),
-          );
-        }
-      },
+            );
+          }
+        },
+      ),
     );
   }
 

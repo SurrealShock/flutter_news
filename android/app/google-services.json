@@ -23,6 +23,65 @@
           }
         },
         {
+          "client_id": "132294635928-jecgkj02kd6tcbiuoddip2n5cg2e22do.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutternews",
+            "certificate_hash": "4593070a5d994a10aa2accfd07689637d7691657"
+          }
+        },
+        {
+          "client_id": "132294635928-pb8penf016sp5mcp701i1a4kli66rasu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2d0UE252Lp7STNyTH5gq0Ip7QuGPfBjc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "132294635928-pb8penf016sp5mcp701i1a4kli66rasu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "132294635928-ot658q56at1a4b1nrvrg07dmpg3t3cod.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterNews"
+              }
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:132294635928:android:f4acfc1a13f84f62",
+        "android_client_info": {
+          "package_name": "com.flutter.news"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "132294635928-urb9kd12qs2atap6n4u1c4m39dnhbi1e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.flutter.news",
+            "certificate_hash": "4593070a5d994a10aa2accfd07689637d7691657"
+          }
+        },
+        {
           "client_id": "132294635928-pb8penf016sp5mcp701i1a4kli66rasu.apps.googleusercontent.com",
           "client_type": 3
         }

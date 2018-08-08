@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_news/navigation/widgets.dart';
 import 'package:flutter_news/utilities/api.dart';
@@ -106,7 +105,7 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
         print('got here');
 
     var fetch = await fetchUrl.fetch(
-        'https://newsapi.org/v2/everything?q=' + query + '&apiKey=' + apiKey);
+        'https://newsapi.org/v2/everything?q=' + query + '&sortBy=popularity&apiKey=' + apiKey);
         print('got here');
     setState(() {
       fetchStatus = FetchStatus.fetched;
@@ -125,6 +124,7 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
             itemBuilder: (context, index) {
               return GestureDetector(
                 onTap: () {
+                  textController.text = popularSearches[index];
                   setState(() {
                     fetchStatus = FetchStatus.fetching;
                   });
@@ -154,82 +154,76 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
           itemBuilder: (context, index) {
             bookMarkItem.add(BookMarkItem
                 .fromJson(fetchUrl.fetchSaved()['articles'][index]));
-            return Dismissible(
-              onDismissed: (direction) {
-                bookMarkItem.removeAt(index);
-              },
-              key: Key(bookMarkItem[index].articleURL),
-              child: Padding(
-                padding: const EdgeInsets.only(
-                    left: 8.0, right: 8.0, top: 6.0, bottom: 6.0),
-                child: GestureDetector(
-                  onTap: () {
-                    launchURL(bookMarkItem[index].articleURL);
-                  },
-                  child: NewsContainer(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(children: <Widget>[
-                        NewsCard(
-                            bookMarkItem[index],
-                            PopupMenuButton<int>(
-                              icon: Icon(
-                                Icons.more_vert,
-                                size: 20.0,
-                                color: Colors.grey[700],
-                              ),
-                              padding: EdgeInsets.zero,
-                              onSelected: (_) {
-                                // switch (_) {
-                                //   case 0:
-                                //     if (!data.containsKey(
-                                //         bookMarkItem[index].title)) {
-                                //       bookMark(bookMarkItem[index]);
-                                //     } else {
-                                //       BookMarkItem.removeBookMark(
-                                //           FirebaseDatabase.instance
-                                //               .reference()
-                                //               .child('users/' + user.uid)
-                                //               .child('/' +
-                                //                   data[bookMarkItem[index]
-                                //                       .title]));
-                                //     }
-                                //     break;
-                                //   case 1:
-                                //     break;
-                                // }
-                              },
-                              itemBuilder: (BuildContext context) {
-                                // bool bookmarked = data
-                                //     .containsKey(bookMarkItem[index].title);
-                                return <PopupMenuEntry<int>>[
-                                  PopupMenuItem<int>(
-                                    value: 0,
-                                    child: Row(
-                                      children: <Widget>[
-                                        Icon(true
-                                            ? Icons.bookmark
-                                            : Icons.bookmark_border),
-                                        Text(true
-                                            ? "Remove bookmark"
-                                            : "  Bookmark")
-                                      ],
-                                    ),
+            return Padding(
+              padding: const EdgeInsets.only(
+                  left: 8.0, right: 8.0, top: 6.0, bottom: 6.0),
+              child: GestureDetector(
+                onTap: () {
+                  launchURL(bookMarkItem[index].articleURL);
+                },
+                child: NewsContainer(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(children: <Widget>[
+                      NewsCard(
+                          bookMarkItem[index],
+                          PopupMenuButton<int>(
+                            icon: Icon(
+                              Icons.more_vert,
+                              size: 20.0,
+                              color: Colors.grey[700],
+                            ),
+                            padding: EdgeInsets.zero,
+                            onSelected: (_) {
+                              // switch (_) {
+                              //   case 0:
+                              //     if (!data.containsKey(
+                              //         bookMarkItem[index].title)) {
+                              //       bookMark(bookMarkItem[index]);
+                              //     } else {
+                              //       BookMarkItem.removeBookMark(
+                              //           FirebaseDatabase.instance
+                              //               .reference()
+                              //               .child('users/' + user.uid)
+                              //               .child('/' +
+                              //                   data[bookMarkItem[index]
+                              //                       .title]));
+                              //     }
+                              //     break;
+                              //   case 1:
+                              //     break;
+                              // }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              // bool bookmarked = data
+                              //     .containsKey(bookMarkItem[index].title);
+                              return <PopupMenuEntry<int>>[
+                                PopupMenuItem<int>(
+                                  value: 0,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(true
+                                          ? Icons.bookmark
+                                          : Icons.bookmark_border),
+                                      Text(true
+                                          ? "Remove bookmark"
+                                          : "  Bookmark")
+                                    ],
                                   ),
-                                  PopupMenuItem<int>(
-                                    value: 1,
-                                    child: Row(
-                                      children: <Widget>[
-                                        Icon(Icons.settings),
-                                        Text("  Customize")
-                                      ],
-                                    ),
+                                ),
+                                PopupMenuItem<int>(
+                                  value: 1,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.settings),
+                                      Text("  Customize")
+                                    ],
                                   ),
-                                ];
-                              },
-                            ))
-                      ]),
-                    ),
+                                ),
+                              ];
+                            },
+                          ))
+                    ]),
                   ),
                 ),
               ),
