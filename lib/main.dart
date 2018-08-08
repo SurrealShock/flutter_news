@@ -18,9 +18,7 @@ class MyApp extends StatelessWidget {
         future: getUser(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return snapshot.data
-                ? News()
-                : Login();
+            return snapshot.data ? News() : Login();
           } else {
             return Container(
               color: Colors.white,

@@ -47,6 +47,7 @@ class CardText extends StatelessWidget {
           child: Text(
             body,
             maxLines: 3,
+            overflow: TextOverflow.fade,
             style: TextStyle(fontSize: 13.0, color: Colors.grey[600]),
           ),
         ),
