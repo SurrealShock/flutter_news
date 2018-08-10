@@ -22,14 +22,14 @@ class MyApp extends StatelessWidget {
           } else {
             return Container(
               color: Colors.white,
-              child: Center(
-                child: Icon(
-                  Icons.library_books,
-                  color: Colors.blue,
-                  size: 128.0,
-                  textDirection: TextDirection.ltr,
-                ),
-              ),
+//              child: Center(
+//                child: Icon(
+//                  Icons.library_books,
+//                  color: Colors.blue,
+//                  size: 128.0,
+//                  textDirection: TextDirection.ltr,
+//                ),
+//              ),
             );
           }
         },
