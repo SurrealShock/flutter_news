@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_news/main.dart';
 import 'package:flutter_news/navigation/search.dart';
 import 'package:flutter_news/navigation/widgets.dart';
 import 'package:flutter_news/utilities/bookMarkItem.dart';
@@ -14,119 +14,184 @@ class BookMarks extends StatefulWidget {
 }
 
 class BookMarkState extends State<BookMarks> {
-  BookMarkItem bookMarkItem;
+  FirebaseUser user;
+  DatabaseReference reference;
+  List<BookMarkItem> bookMarkItem = [];
+  var data = Map();
+  var data2 = Map();
+  Key sliverKey = Key('sliverKey');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(title: Text("Bookmarks"), centerTitle: true, actions: <Widget>[
-        StreamBuilder(
-          stream: FirebaseAuth.instance.currentUser().asStream(),
-          builder:
-              (BuildContext context, AsyncSnapshot<FirebaseUser> snapshot) {
-            if (snapshot.hasData) {
-              return ProfilePicture(snapshot.data.photoUrl);
-            } else {
-              return Container(
-                height: 0.0,
-                width: 0.0,
-              );
-            }
-          },
-        ),
-        IconButton(
-          onPressed: () {
-            Navigator
-                .of(context)
-                .pushReplacement(MaterialPageRoute(builder: (context) => Search()));
-          },
-          icon: Icon(Icons.search),
-        )
-      ]),
-      body: Center(
-        child: FutureBuilder(
-          future: Auth.getUser(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              FirebaseUser user = snapshot.data;
-              return FirebaseAnimatedList(
-                  query: FirebaseDatabase.instance
-                      .reference()
-                      .child('users/' + user.uid),
-                  itemBuilder: (context, snapshot, animation, index) {
-                    bookMarkItem = BookMarkItem.fromSnapshot(snapshot.value);
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                          left: 8.0, right: 8.0, top: 12.0, bottom: 0.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          launchURL(bookMarkItem.articleURL);
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+              title: Text('Bookmarks'),
+              centerTitle: true,
+              snap: true,
+              floating: true,
+              actions: <Widget>[
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => Search()));
+                  },
+                  icon: Icon(Icons.search),
+                ),
+                StreamBuilder(
+                  stream: FirebaseAuth.instance.currentUser().asStream(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<FirebaseUser> snapshot) {
+                    if (snapshot.hasData) {
+                      return PopupMenuButton(
+                        child: profilePicture(snapshot.data.photoUrl),
+                        onSelected: (index) {
+                          switch (index) {
+                            case 0:
+                              Auth.signOutFirebase();
+                              Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          MyApp()));
+                              break;
+                          }
                         },
-                        child: NewsContainer(
-                            child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Row(children: <Widget>[
-                            NewsCard(
-                                bookMarkItem: bookMarkItem,
-                                showDate: false,
-                                customPopUpMenu: PopupMenuButton<int>(
-                                  icon: Icon(
-                                    Icons.more_vert,
-                                    size: 20.0,
-                                    color: Colors.grey[700],
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  onSelected: (_) {
-                                    switch (_) {
-                                      case 0:
-                                        BookMarkItem.removeBookMark(
-                                            FirebaseDatabase.instance
-                                                .reference()
-                                                .child('users/' + user.uid)
-                                                .child('/' + snapshot.key));
-                                        break;
-                                      case 1:
-                                        print("Todo");
-                                        break;
-                                    }
-                                  },
-                                  itemBuilder: (BuildContext context) =>
-                                      <PopupMenuEntry<int>>[
+                        itemBuilder: (context) {
+                          return <PopupMenuEntry<int>>[
+                            PopupMenuItem(
+                              value: 0,
+                              child: Text('Sign out'),
+                            )
+                          ];
+                        },
+                      );
+                    } else {
+                      return Container(
+                        height: 0.0,
+                        width: 0.0,
+                      );
+                    }
+                  },
+                ),
+              ]),
+          FutureBuilder(
+            future: Auth.getUser(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return SliverList(
+                  key: sliverKey,
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                            left: 8.0, right: 8.0, top: 6.0, bottom: 6.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            launchURL(bookMarkItem[index].articleURL);
+                          },
+                          child: NewsContainer(
+                              child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(children: <Widget>[
+                              NewsCard(
+                                  bookMarkItem: bookMarkItem[index],
+                                  showDate: false,
+                                  customPopUpMenu: PopupMenuButton<int>(
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      size: 20.0,
+                                      color: Colors.grey[700],
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    onSelected: (_) {
+                                      switch (_) {
+                                        case 0:
+                                          if (!data.containsKey(
+                                              bookMarkItem[index].title)) {
+                                            bookMark(bookMarkItem[index]);
+                                          } else {
+                                            BookMarkItem.removeBookMark(
+                                                FirebaseDatabase.instance
+                                                    .reference()
+                                                    .child('users/' + user.uid)
+                                                    .child('/' +
+                                                        data[bookMarkItem[index]
+                                                            .title]));
+                                          }
+                                          break;
+                                      }
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      bool bookmarked = data.containsKey(
+                                          bookMarkItem[index].title);
+                                      return <PopupMenuEntry<int>>[
                                         PopupMenuItem<int>(
                                           value: 0,
                                           child: Row(
                                             children: <Widget>[
-                                              Icon(Icons.bookmark),
-                                              Text("  Remove Bookmark")
+                                              Icon(bookmarked
+                                                  ? Icons.bookmark
+                                                  : Icons.bookmark_border),
+                                              Text(bookmarked
+                                                  ? "Remove bookmark"
+                                                  : "  Bookmark")
                                             ],
                                           ),
                                         ),
-                                        PopupMenuItem<int>(
-                                          value: 1,
-                                          child: Row(
-                                            children: <Widget>[
-                                              Icon(Icons.settings),
-                                              Text("  Customize")
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                )),
-                          ]),
-                        )),
-                      ),
-                    );
-                  });
-            }
-            return Loading(Colors.blue);
-            // return ListView.builder(
-            //   itemCount: 10,
-            //   itemBuilder: (context, index) {
-            //     return LoadingCard(index + 5);
-            //   });
-          },
-        ),
+                                      ];
+                                    },
+                                  )),
+                            ]),
+                          )),
+                        ),
+                      );
+                    },
+                    childCount: bookMarkItem.length,
+                  ),
+                );
+              }
+              return SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return LoadingCard();
+                }, childCount: 10),
+              );
+            },
+          )
+        ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+    Auth.getUser().then((u) {
+      user = u;
+      reference = firebaseDatabase.reference().child('users/' + user.uid);
+      reference.onChildAdded.listen(_onEntryAdded);
+      reference.onChildRemoved.listen(_onEntryRemoved);
+    });
+    super.initState();
+  }
+
+  _onEntryAdded(Event event) {
+    data[event.snapshot.value['title']] = event.snapshot.key;
+    bookMarkItem.add(BookMarkItem.fromSnapshot(event.snapshot.value));
+  }
+
+  _onEntryRemoved(Event event) {
+    bookMarkItem.removeWhere((bookMarkItem) {
+      return bookMarkItem.title ==
+          BookMarkItem.fromSnapshot(event.snapshot.value).title;
+    });
+    data.remove(event.snapshot.value['title']);
+    setState(() {
+          bookMarkItem.length;
+        });
+  }
+
+  void bookMark(BookMarkItem bMrkItm) async {
+    reference.push().set(bMrkItm.toJson());
   }
 }
