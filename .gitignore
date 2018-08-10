@@ -8,3 +8,4 @@ build/
 
 .flutter-plugins
 lib/utilities/api.dart
+.vscode/
