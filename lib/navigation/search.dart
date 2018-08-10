@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_news/navigation/widgets.dart';
 import 'package:flutter_news/utilities/api.dart';
 import 'package:flutter_news/utilities/bookMarkItem.dart';
 import 'package:flutter_news/utilities/fetch.dart';
+import 'package:flutter_news/utilities/firebase.dart';
 import 'package:flutter_news/utilities/url_launch.dart';
 
 class Search extends StatefulWidget {
@@ -18,17 +21,27 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
   double borderWidth = 1.0;
   List<String> popularSearches = [];
   GetFromUrl fetchUrl = GetFromUrl();
+  FirebaseUser user;
+  var data = Map();
+  DatabaseReference reference;
 
   @override
   void initState() {
+    final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+    Auth.getUser().then((user) {
+      this.user = user;
+      reference = firebaseDatabase.reference().child('users/' + user.uid);
+      reference.onChildAdded.listen(_onEntryAdded);
+      reference.onChildRemoved.listen(_onEntryRemoved);
+    });
     popularSearches = [
-      'Tech',
-      'Politics',
-      'Software',
-      'Hardware',
+      'Business',
+      'Entertainment',
+      'General',
+      'Health',
+      'Science',
       'Sports',
-      'Drama',
-      'Business'
+      'Technology'
     ];
     textController = TextEditingController();
     super.initState();
@@ -46,7 +59,7 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
               onSubmitted: (value) {
                 setState(() {
                   fetchStatus = FetchStatus.fetching;
-                  handleSearch(value);
+                  handleSearch(value, false);
                 });
               },
               onChanged: (value) {
@@ -84,38 +97,49 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
               FocusScope.of(context).requestFocus(new FocusNode());
               setState(() {
                 fetchStatus = FetchStatus.fetching;
-                handleSearch(textController.text);
+                handleSearch(textController.text, false);
               });
             },
             icon: Icon(Icons.search),
           )
         ],
       ),
-      body: SearchScreen(),
+      body: searchScreen(),
     );
   }
 
-  Future<dynamic> handleSearch(final search) async {
+  Future<dynamic> handleSearch(final search, final category) async {
     var query;
     if (search == TextEditingValue) {
       query = search.text;
     } else {
       query = search;
     }
-    print('got here');
 
-    var fetch = await fetchUrl.fetch('https://newsapi.org/v2/everything?q=' +
-        query +
-        '&sortBy=popularity&apiKey=' +
-        apiKey);
-    print('got here');
+    dynamic fetch;
+    if (!category) {
+      fetch = await fetchUrl.fetch('https://newsapi.org/v2/everything?q=' +
+          query +
+          '&sortBy=popularity&apiKey=' +
+          apiKey);
+          print('https://newsapi.org/v2/everything?q=' +
+          query +
+          '&sortBy=popularity&apiKey=' +
+          apiKey);
+    } else {
+      fetch = await fetchUrl.fetch(
+          'https://newsapi.org/v2/top-headlines?country=us' +
+              query +
+              '&apiKey=' +
+              apiKey);
+    }
     setState(() {
       fetchStatus = FetchStatus.fetched;
     });
     return fetch;
   }
 
-  Widget SearchScreen() {
+  Widget searchScreen() {
     switch (fetchStatus) {
       case FetchStatus.idle:
         return Padding(
@@ -130,13 +154,15 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
                   setState(() {
                     fetchStatus = FetchStatus.fetching;
                   });
-                  handleSearch(popularSearches[index]);
+                  handleSearch('&category=' + popularSearches[index], true);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child:
-                      Text(popularSearches[index], textAlign: TextAlign.center),
-                ),
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      popularSearches[index],
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16.0, color: Colors.grey[700]),
+                    )),
               );
             },
           ),
@@ -151,89 +177,114 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
         break;
       case FetchStatus.fetched:
         List<BookMarkItem> bookMarkItem = [];
-        return ListView.builder(
-          itemCount: fetchUrl.fetchSaved()['totalResults'],
-          itemBuilder: (context, index) {
-            bookMarkItem.add(BookMarkItem
-                .fromJson(fetchUrl.fetchSaved()['articles'][index]));
-            return Padding(
-              padding: const EdgeInsets.only(
-                  left: 8.0, right: 8.0, top: 6.0, bottom: 6.0),
-              child: GestureDetector(
-                onTap: () {
-                  launchURL(bookMarkItem[index].articleURL);
-                },
-                child: NewsContainer(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(children: <Widget>[
-                      NewsCard(
-                          showDate: false,
-                          bookMarkItem: bookMarkItem[index],
-                          customPopUpMenu: PopupMenuButton<int>(
-                            icon: Icon(
-                              Icons.more_vert,
-                              size: 20.0,
-                              color: Colors.grey[700],
-                            ),
-                            padding: EdgeInsets.zero,
-                            onSelected: (_) {
-                              // switch (_) {
-                              //   case 0:
-                              //     if (!data.containsKey(
-                              //         bookMarkItem[index].title)) {
-                              //       bookMark(bookMarkItem[index]);
-                              //     } else {
-                              //       BookMarkItem.removeBookMark(
-                              //           FirebaseDatabase.instance
-                              //               .reference()
-                              //               .child('users/' + user.uid)
-                              //               .child('/' +
-                              //                   data[bookMarkItem[index]
-                              //                       .title]));
-                              //     }
-                              //     break;
-                              //   case 1:
-                              //     break;
-                              // }
-                            },
-                            itemBuilder: (BuildContext context) {
-                              // bool bookmarked = data
-                              //     .containsKey(bookMarkItem[index].title);
-                              return <PopupMenuEntry<int>>[
-                                PopupMenuItem<int>(
-                                  value: 0,
-                                  child: Row(
-                                    children: <Widget>[
-                                      Icon(true
-                                          ? Icons.bookmark
-                                          : Icons.bookmark_border),
-                                      Text(true
-                                          ? "Remove bookmark"
-                                          : "  Bookmark")
-                                    ],
+        int itemCount = fetchUrl.fetchSaved()['totalResults'];
+        var pageNum = 2;
+        itemCount = itemCount.clamp(0, 20);
+        return NotificationListener<OverscrollIndicatorNotification>(
+          onNotification: (notification) {
+            if (!notification.leading) {
+              if (fetchUrl.fetchSaved()['totalResults'] > 20) {
+                int addCount = fetchUrl.fetchSaved()['totalResults'];
+                addCount = addCount.clamp(0, 20);
+                if (addCount != 0) {
+                  handleSearch(textController.text + '&page=$pageNum', false)
+                      .then((_) {
+                    pageNum++;
+                    setState(() {
+                      itemCount += addCount;
+                    });
+                  });
+                }
+              }
+            }
+          },
+          child: ListView.builder(
+            itemCount: itemCount,
+            itemBuilder: (context, index) {
+              bookMarkItem.add(BookMarkItem.fromJson(
+                  fetchUrl.fetchSaved()['articles'][index]));
+              return Padding(
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, top: 6.0, bottom: 6.0),
+                child: GestureDetector(
+                  onTap: () {
+                    launchURL(bookMarkItem[index].articleURL);
+                  },
+                  child: NewsContainer(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(children: <Widget>[
+                        NewsCard(
+                            showDate: false,
+                            bookMarkItem: bookMarkItem[index],
+                            customPopUpMenu: PopupMenuButton<int>(
+                              icon: Icon(
+                                Icons.more_vert,
+                                size: 20.0,
+                                color: Colors.grey[700],
+                              ),
+                              padding: EdgeInsets.zero,
+                              onSelected: (_) {
+                                switch (_) {
+                                  case 0:
+                                    if (!data.containsKey(
+                                        bookMarkItem[index].title)) {
+                                      bookMark(bookMarkItem[index]);
+                                    } else {
+                                      BookMarkItem.removeBookMark(
+                                          FirebaseDatabase.instance
+                                              .reference()
+                                              .child('users/' + user.uid)
+                                              .child('/' +
+                                                  data[bookMarkItem[index]
+                                                      .title]));
+                                    }
+                                    break;
+                                  case 1:
+                                    break;
+                                }
+                              },
+                              itemBuilder: (BuildContext context) {
+                                bool bookmarked =
+                                    data.containsKey(bookMarkItem[index].title);
+                                return <PopupMenuEntry<int>>[
+                                  PopupMenuItem<int>(
+                                    value: 0,
+                                    child: Row(
+                                      children: <Widget>[
+                                        Icon(bookmarked
+                                            ? Icons.bookmark
+                                            : Icons.bookmark_border),
+                                        Text(bookmarked
+                                            ? "Remove bookmark"
+                                            : "  Bookmark")
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                PopupMenuItem<int>(
-                                  value: 1,
-                                  child: Row(
-                                    children: <Widget>[
-                                      Icon(Icons.settings),
-                                      Text("  Customize")
-                                    ],
-                                  ),
-                                ),
-                              ];
-                            },
-                          ))
-                    ]),
+                                ];
+                              },
+                            ))
+                      ]),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
         break;
     }
+  }
+
+  _onEntryAdded(Event event) {
+    data[event.snapshot.value['title']] = event.snapshot.key;
+  }
+
+  void bookMark(BookMarkItem bMrkItm) async {
+    reference.push().set(bMrkItm.toJson());
+  }
+
+  _onEntryRemoved(Event event) {
+    data.remove(event.snapshot.value['title']);
   }
 }
