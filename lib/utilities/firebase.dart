@@ -32,6 +32,7 @@ class Auth {
   }
 
   static void signOutFirebase() async {
+    await googleSignIn.signOut();
     await firebaseAuth.signOut();
   }
 
