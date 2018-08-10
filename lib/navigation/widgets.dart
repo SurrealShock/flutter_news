@@ -1,6 +1,10 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_news/main.dart';
+import 'package:flutter_news/navigation/search.dart';
+import 'package:flutter_news/utilities/firebase.dart';
 
 class NewsContainer extends StatelessWidget {
   final Widget child;
@@ -104,6 +108,57 @@ class ImageContainer extends StatelessWidget {
   }
 }
 
+SliverAppBar sliverAppBar(BuildContext context, String title) {
+  return SliverAppBar(
+      forceElevated: true,
+      title: Text(title),
+      centerTitle: true,
+      snap: true,
+      floating: true,
+      actions: <Widget>[
+        IconButton(
+          onPressed: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => Search()));
+          },
+          icon: Icon(Icons.search),
+        ),
+        StreamBuilder(
+          stream: FirebaseAuth.instance.currentUser().asStream(),
+          builder:
+              (BuildContext context, AsyncSnapshot<FirebaseUser> snapshot) {
+            if (snapshot.hasData) {
+              return PopupMenuButton(
+                child: profilePicture(snapshot.data.photoUrl),
+                onSelected: (index) {
+                  switch (index) {
+                    case 0:
+                      Auth.signOutFirebase();
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (BuildContext context) => MyApp()));
+                      break;
+                  }
+                },
+                itemBuilder: (context) {
+                  return <PopupMenuEntry<int>>[
+                    PopupMenuItem(
+                      value: 0,
+                      child: Text('Sign out'),
+                    )
+                  ];
+                },
+              );
+            } else {
+              return Container(
+                height: 0.0,
+                width: 0.0,
+              );
+            }
+          },
+        ),
+      ]);
+}
+
 class NewsCard extends StatelessWidget {
   final customPopUpMenu;
   final bookMarkItem;
@@ -115,26 +170,44 @@ class NewsCard extends StatelessWidget {
       child: Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(bottom: 5.0),
+            padding: const EdgeInsets.only(bottom: 4.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                showDate
-                    ? Text(
-                        (DateTime.now().difference(
-                                    DateTime.parse(bookMarkItem.published)))
-                                .inHours
-                                .toString() +
-                            " hr ago · " +
-                            bookMarkItem.source,
-                        style:
-                            TextStyle(fontSize: 13.0, color: Colors.grey[700]),
-                      )
-                    : Text(
-                        bookMarkItem.source,
-                        style:
-                            TextStyle(fontSize: 13.0, color: Colors.grey[700]),
-                      ),
+                Container(
+                  decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 2.5,
+                            offset: Offset(0.0, 2.5))
+                      ],
+                      color: Theme.of(context).primaryColor,
+                      borderRadius: BorderRadius.circular(4.0)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Row(
+                      children: <Widget>[
+                        showDate
+                            ? Text(
+                                (DateTime.now().difference(DateTime.parse(
+                                            bookMarkItem.published)))
+                                        .inHours
+                                        .toString() +
+                                    " hr ago · " +
+                                    bookMarkItem.source,
+                                style: TextStyle(
+                                    fontSize: 13.0, color: Colors.white),
+                              )
+                            : Text(
+                                bookMarkItem.source,
+                                style: TextStyle(
+                                    fontSize: 13.0, color: Colors.white),
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
                 customPopUpMenu,
               ],
             ),
@@ -229,7 +302,7 @@ class LoadingCardState extends State<LoadingCard>
             children: <Widget>[
               Align(
                 alignment: Alignment.centerLeft,
-                              child: Padding(
+                child: Padding(
                   padding: const EdgeInsets.only(bottom: 6.0),
                   child: Container(
                     height: 13.0,
