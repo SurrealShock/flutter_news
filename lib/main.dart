@@ -14,6 +14,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Check if user is logged in
     return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        primaryColor: Colors.cyan[600]
+      ),
       home: FutureBuilder(
         future: getUser(),
         builder: (context, snapshot) {
@@ -22,14 +26,6 @@ class MyApp extends StatelessWidget {
           } else {
             return Container(
               color: Colors.white,
-//              child: Center(
-//                child: Icon(
-//                  Icons.library_books,
-//                  color: Colors.blue,
-//                  size: 128.0,
-//                  textDirection: TextDirection.ltr,
-//                ),
-//              ),
             );
           }
         },
