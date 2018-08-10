@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:flutter_advanced_networkimage/flutter_advanced_networkimage.dart';
+import 'package:flutter/material.dart';
 
 class NewsContainer extends StatelessWidget {
   final Widget child;
@@ -21,7 +21,7 @@ class NewsContainer extends StatelessWidget {
   }
 }
 
-Widget Loading(Color color) {
+Widget loading(Color color) {
   return Center(
       child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(color)));
@@ -56,7 +56,7 @@ class CardText extends StatelessWidget {
   }
 }
 
-Widget ProfilePicture(String url) {
+Widget profilePicture(String url) {
   return Padding(
       padding: const EdgeInsets.all(10.0),
       child: Container(
@@ -71,10 +71,9 @@ Widget ProfilePicture(String url) {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(76.0),
-            child: CachedNetworkImage(
-                imageUrl: url,
-                placeholder:
-                    Icon(Icons.image, size: 38.0, color: Colors.white70)),
+            child: Image(
+              image: AdvancedNetworkImage(url, useDiskCache: true),
+            ),
           )));
 }
 
@@ -88,13 +87,13 @@ class ImageContainer extends StatelessWidget {
             padding: const EdgeInsets.only(left: 2.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(7.5),
-              child: CachedNetworkImage(
+              child: Image(
                 height: 75.0,
                 width: 75.0,
-                imageUrl: url,
+                image: AdvancedNetworkImage(url),
                 fit: BoxFit.cover,
-                placeholder:
-                    Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
+                // placeholder:
+                //     Icon(Icons.image, size: 48.0, color: Colors.grey[700]),
               ),
             ),
           )
@@ -106,10 +105,10 @@ class ImageContainer extends StatelessWidget {
 }
 
 class NewsCard extends StatelessWidget {
-  Widget customPopUpMenu;
+  final customPopUpMenu;
   final bookMarkItem;
   final showDate;
-  NewsCard({this.bookMarkItem, this.customPopUpMenu, this.showDate = true});
+  NewsCard({this.bookMarkItem, this.customPopUpMenu, this.showDate});
   @override
   Widget build(BuildContext context) {
     return Flexible(
@@ -158,7 +157,7 @@ class NewsCard extends StatelessWidget {
   }
 }
 
-Widget Recommendations(List recommend) {
+Widget recommendations(List recommend) {
   return ListView.builder(
     // padding: EdgeInsets.only(top: 4.0, bottom: 0.0),
     itemCount: recommend.length,
@@ -180,18 +179,18 @@ class LoadingCard extends StatefulWidget {
 
 class LoadingCardState extends State<LoadingCard>
     with SingleTickerProviderStateMixin {
-  AnimationController loadingOpacity;
-  Animation opacity;
-  Random rand;
-  double divideFactor;
+  AnimationController _loadingOpacity;
+  Animation _opacity;
+  Random _rand;
+  double _divideFactor;
 
   @override
   void initState() {
-    rand = Random();
-    divideFactor = (rand.nextInt(5) + 1.4);
-    loadingOpacity = AnimationController(
+    _rand = Random();
+    _divideFactor = (_rand.nextInt(5) + 1.4);
+    _loadingOpacity = AnimationController(
         vsync: this, duration: Duration(milliseconds: 1500));
-    opacity = Tween(begin: 0.4, end: 1.0).animate(loadingOpacity)
+    _opacity = Tween(begin: 0.4, end: 1.0).animate(_loadingOpacity)
       ..addListener(() {
         setState(() {});
       });
@@ -201,18 +200,18 @@ class LoadingCardState extends State<LoadingCard>
 
   @override
   void dispose() {
-    loadingOpacity.dispose();
+    _loadingOpacity.dispose();
     super.dispose();
   }
 
   void _animateForward() async {
-    await loadingOpacity.forward().then((_) {
+    await _loadingOpacity.forward().then((_) {
       _animateReverse();
     });
   }
 
   void _animateReverse() async {
-    await loadingOpacity.reverse().then((_) {
+    await _loadingOpacity.reverse().then((_) {
       _animateForward();
     });
   }
@@ -228,28 +227,26 @@ class LoadingCardState extends State<LoadingCard>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 5.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Container(
-                      height: 13.0,
-                      width: MediaQuery.of(context).size.width / divideFactor,
-                      // constraints: BoxConstraints.expand(),
-                      decoration: BoxDecoration(
-                          color: Colors.grey[350].withOpacity(opacity.value),
-                          borderRadius: BorderRadius.circular(6.5)),
-                    ),
-                  ],
+              Align(
+                alignment: Alignment.centerLeft,
+                              child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6.0),
+                  child: Container(
+                    height: 13.0,
+                    width: MediaQuery.of(context).size.width / _divideFactor,
+                    // constraints: BoxConstraints.expand(),
+                    decoration: BoxDecoration(
+                        color: Colors.grey[350].withOpacity(_opacity.value),
+                        borderRadius: BorderRadius.circular(6.5)),
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 2.0),
+                padding: const EdgeInsets.only(top: 4.0),
                 child: Container(
                   height: 13.0,
                   decoration: BoxDecoration(
-                      color: Colors.grey[350].withOpacity(opacity.value),
+                      color: Colors.grey[350].withOpacity(_opacity.value),
                       borderRadius: BorderRadius.circular(6.5)),
                 ),
               ),
@@ -258,7 +255,16 @@ class LoadingCardState extends State<LoadingCard>
                 child: Container(
                   height: 13.0,
                   decoration: BoxDecoration(
-                      color: Colors.grey[350].withOpacity(opacity.value),
+                      color: Colors.grey[350].withOpacity(_opacity.value),
+                      borderRadius: BorderRadius.circular(6.5)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Container(
+                  height: 13.0,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[350].withOpacity(_opacity.value),
                       borderRadius: BorderRadius.circular(6.5)),
                 ),
               ),
