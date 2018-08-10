@@ -44,56 +44,7 @@ class HomeState extends State<Home> {
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
-          SliverAppBar(
-              title: Text("News"),
-              centerTitle: true,
-              floating: true,
-              snap: true,
-              elevation: 4.0,
-              actions: <Widget>[
-                IconButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => Search()));
-                  },
-                  icon: Icon(Icons.search),
-                ),
-                StreamBuilder(
-                  stream: FirebaseAuth.instance.currentUser().asStream(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<FirebaseUser> snapshot) {
-                    if (snapshot.hasData) {
-                      return PopupMenuButton(
-                        child: profilePicture(snapshot.data.photoUrl),
-                        onSelected: (index) {
-                          switch (index) {
-                            case 0:
-                              Auth.signOutFirebase();
-                              Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (BuildContext context) =>
-                                          MyApp()));
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) {
-                          return <PopupMenuEntry<int>>[
-                            PopupMenuItem(
-                              value: 0,
-                              child: Text('Sign out'),
-                            )
-                          ];
-                        },
-                      );
-                    } else {
-                      return Container(
-                        height: 0.0,
-                        width: 0.0,
-                      );
-                    }
-                  },
-                ),
-              ]),
+          sliverAppBar(context, 'News'),
           FutureBuilder(
             future: getFromUrl.fetch(
                 "https://newsapi.org/v2/top-headlines?country=us&apiKey=" +
