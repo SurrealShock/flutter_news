@@ -27,7 +27,7 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
-    final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+    final FirebaseDatabase firebaseDatabase = Auth.getDatabase();
     Auth.getUser().then((user) {
       this.user = user;
       reference = firebaseDatabase.reference().child('users/' + user.uid);
@@ -232,7 +232,7 @@ class SearchState extends State<Search> with SingleTickerProviderStateMixin {
                                       bookMark(bookMarkItem[index]);
                                     } else {
                                       BookMarkItem.removeBookMark(
-                                          FirebaseDatabase.instance
+                                          Auth.getDatabase()
                                               .reference()
                                               .child('users/' + user.uid)
                                               .child('/' +

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 
@@ -38,5 +39,12 @@ class Auth {
 
   static Future<FirebaseUser> getUser() async {
     return await firebaseAuth.currentUser();
+  }
+
+  static FirebaseDatabase getDatabase() {
+    FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+    firebaseDatabase.setPersistenceEnabled(true);
+    firebaseDatabase.setPersistenceCacheSizeBytes(50000000);
+    return firebaseDatabase;
   }
 }

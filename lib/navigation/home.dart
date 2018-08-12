@@ -89,7 +89,7 @@ class HomeState extends State<Home> {
                                               bookMark(bookMarkItem[index]);
                                             } else {
                                               BookMarkItem.removeBookMark(
-                                                  FirebaseDatabase.instance
+                                                  Auth.getDatabase()
                                                       .reference()
                                                       .child(
                                                           'users/' + user.uid)
@@ -148,7 +148,7 @@ class HomeState extends State<Home> {
   @override
   void initState() {
     // controller = ScrollController()..addListener(_scrollListener);
-    final FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
+    final FirebaseDatabase firebaseDatabase = Auth.getDatabase();
     Auth.getUser().then((user) {
       this.user = user;
       reference = firebaseDatabase.reference().child('users/' + user.uid);
