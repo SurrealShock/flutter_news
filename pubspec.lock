@@ -77,7 +77,7 @@ packages:
       name: firebase_auth
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.15"
+    version: "0.5.18"
   firebase_core:
     dependency: "direct main"
     description:
@@ -103,7 +103,7 @@ packages:
       name: flutter_advanced_networkimage
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.4"
+    version: "0.3.6"
   flutter_test:
     dependency: "direct dev"
     description: flutter
